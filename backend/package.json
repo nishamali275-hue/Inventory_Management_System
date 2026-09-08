@@ -1,0 +1,42 @@
+{
+  "name": "inventory-management-backend",
+  "version": "1.0.0",
+  "description": "REST API for CRUD Inventory Management System",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/utils/seedData.js",
+    "test": "jest --detectOpenHandles --forceExit"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "express",
+    "nodejs",
+    "mongodb",
+    "crud",
+    "jwt"
+  ],
+  "author": "Nishant",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "json2csv": "^6.0.0-alpha.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0"
+  }
+}
