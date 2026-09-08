@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { IconComponent } from '../../shared/components/icons/icon.component';
 
 @Component({
@@ -11,7 +12,21 @@ import { IconComponent } from '../../shared/components/icons/icon.component';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, IconComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
+    <div class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 relative">
+      <!-- Dark mode toggle -->
+      <button
+        type="button"
+        (click)="themeService.toggleTheme()"
+        class="absolute top-4 right-4 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 shadow-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+        [attr.aria-label]="themeService.isDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        @if (themeService.isDarkMode()) {
+          <app-icon name="sun" customClass="w-5 h-5 text-amber-400" />
+        } @else {
+          <app-icon name="moon" customClass="w-5 h-5 text-indigo-600" />
+        }
+      </button>
+
       <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10 transition-all">
         <!-- Logo & Header -->
         <div class="text-center mb-8">
@@ -119,6 +134,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  themeService = inject(ThemeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
