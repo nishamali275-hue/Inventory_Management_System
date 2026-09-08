@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const InventoryTransaction = require('../models/InventoryTransaction');
+const { invalidateInventoryCache } = require('../utils/cacheInvalidator');
 
 /**
  * @desc    Increase product stock (Stock In)
@@ -52,6 +53,8 @@ exports.stockIn = async (req, res, next) => {
     const populatedTransaction = await InventoryTransaction.findById(transaction._id)
       .populate('product', 'name sku')
       .populate('performedBy', 'name email');
+
+    await invalidateInventoryCache();
 
     res.status(200).json({
       success: true,
@@ -126,6 +129,8 @@ exports.stockOut = async (req, res, next) => {
       .populate('product', 'name sku')
       .populate('performedBy', 'name email');
 
+    await invalidateInventoryCache();
+
     res.status(200).json({
       success: true,
       message: `Successfully dispatched ${qtyNumber} units of '${product.name}'. New stock: ${newQuantity}`,
@@ -196,6 +201,8 @@ exports.adjustStock = async (req, res, next) => {
     const populatedTransaction = await InventoryTransaction.findById(transaction._id)
       .populate('product', 'name sku')
       .populate('performedBy', 'name email');
+
+    await invalidateInventoryCache();
 
     res.status(200).json({
       success: true,

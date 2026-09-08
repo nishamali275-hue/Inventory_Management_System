@@ -1,19 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../core/services/dashboard.service';
-import { InventoryService } from '../../core/services/inventory.service';
-import { ToastService } from '../../core/services/toast.service';
 import { DashboardData } from '../../core/models/dashboard.model';
-import { Product } from '../../core/models/product.model';
 import { IconComponent } from '../../shared/components/icons/icon.component';
-import { ModalComponent } from '../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, IconComponent, ModalComponent],
+  imports: [CommonModule, RouterModule, IconComponent],
   template: `
     <div class="space-y-6">
       <!-- Page Header -->
@@ -253,210 +248,15 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
           </div>
         </div>
 
-        <!-- Critical Alerts & Recent Activity Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Low Stock / Out of Stock Action Table (2 cols) -->
-          <div class="lg:col-span-2 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                  <app-icon name="alert-circle" customClass="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 class="text-base font-bold text-slate-900 dark:text-white">Stock Restock Required</h3>
-                  <p class="text-xs text-slate-500">Items at or below safety threshold</p>
-                </div>
-              </div>
-              <span class="px-2.5 py-1 bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-lg">
-                {{ data.lowStockAlerts.length }} items
-              </span>
-            </div>
-
-            @if (data.lowStockAlerts.length === 0) {
-              <div class="p-8 text-center text-slate-400 text-xs">
-                <app-icon name="check-circle" customClass="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                All stock levels are optimal! No low stock alerts.
-              </div>
-            } @else {
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold uppercase tracking-wider border-y border-slate-200 dark:border-slate-800">
-                    <tr>
-                      <th class="py-2.5 px-3">Product Name</th>
-                      <th class="py-2.5 px-3">SKU</th>
-                      <th class="py-2.5 px-3">Current Stock</th>
-                      <th class="py-2.5 px-3">Status</th>
-                      <th class="py-2.5 px-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                    @for (item of data.lowStockAlerts; track item._id) {
-                      <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
-                        <td class="py-3 px-3 font-semibold text-slate-900 dark:text-white">
-                          {{ item.name }}
-                        </td>
-                        <td class="py-3 px-3 font-mono text-slate-600 dark:text-slate-400">
-                          {{ item.sku }}
-                        </td>
-                        <td class="py-3 px-3 font-bold" [ngClass]="item.quantity === 0 ? 'text-rose-600' : 'text-amber-600'">
-                          {{ item.quantity }} / {{ item.lowStockThreshold }}
-                        </td>
-                        <td class="py-3 px-3">
-                          <span
-                            class="px-2 py-0.5 rounded-md font-bold text-[10px] uppercase"
-                            [ngClass]="item.quantity === 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'"
-                          >
-                            {{ item.status }}
-                          </span>
-                        </td>
-                        <td class="py-3 px-3 text-right">
-                          <button
-                            (click)="openRestockModal(item)"
-                            class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/80 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold rounded-lg transition"
-                          >
-                            Restock
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </div>
-
-          <!-- Recent Activity Log (1 col) -->
-          <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white">Recent Movements</h3>
-                <p class="text-xs text-slate-500">Live warehouse transactions</p>
-              </div>
-              <a routerLink="/stock" class="text-xs font-bold text-indigo-600 hover:underline">
-                View Log
-              </a>
-            </div>
-
-            <div class="space-y-4 mt-4">
-              @for (tx of data.recentTransactions; track tx._id) {
-                <div class="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
-                  <div
-                    class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                    [ngClass]="{
-                      'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400': tx.type === 'IN',
-                      'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400': tx.type === 'OUT',
-                      'bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400': tx.type === 'ADJUSTMENT'
-                    }"
-                  >
-                    @if (tx.type === 'IN') {
-                      <app-icon name="arrow-down-left" customClass="w-4 h-4" />
-                    } @else if (tx.type === 'OUT') {
-                      <app-icon name="arrow-up-right" customClass="w-4 h-4" />
-                    } @else {
-                      <app-icon name="sliders" customClass="w-4 h-4" />
-                    }
-                  </div>
-
-                  <div class="flex-1 min-w-0 text-xs">
-                    <div class="flex items-center justify-between">
-                      <span class="font-bold text-slate-900 dark:text-white truncate">
-                        {{ getProductName(tx.product) }}
-                      </span>
-                      <span class="font-bold font-mono ml-2 shrink-0" [ngClass]="tx.type === 'IN' ? 'text-emerald-600' : (tx.type === 'OUT' ? 'text-rose-600' : 'text-indigo-600')">
-                        {{ tx.type === 'IN' ? '+' : (tx.type === 'OUT' ? '-' : '') }}{{ tx.quantity }}
-                      </span>
-                    </div>
-                    <div class="text-slate-500 text-[11px] truncate">
-                      {{ tx.reason || 'Warehouse operation' }}
-                    </div>
-                    <div class="text-[10px] text-slate-400 mt-1">
-                      {{ tx.createdAt | date: 'mediumDate' }} by {{ getUserName(tx.performedBy) }}
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
       }
-
-      <!-- Quick Restock Modal -->
-      <app-modal
-        [isOpen]="isRestockModalOpen()"
-        title="Quick Restock Item"
-        (close)="isRestockModalOpen.set(false)"
-        customWidth="max-w-md"
-      >
-        @if (selectedProduct(); as p) {
-          <div class="space-y-4">
-            <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-              <div class="font-bold text-sm text-slate-900 dark:text-white">{{ p.name }}</div>
-              <div class="text-xs text-slate-500 mt-0.5 font-mono">SKU: {{ p.sku }} | Current Stock: {{ p.quantity }}</div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                Units to Restock
-              </label>
-              <input
-                type="number"
-                [(ngModel)]="restockUnits"
-                min="1"
-                class="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                Reason / Memo
-              </label>
-              <input
-                type="text"
-                [(ngModel)]="restockReason"
-                placeholder="e.g., Emergency restock delivery"
-                class="w-full px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div class="flex items-center justify-end gap-3 pt-3">
-              <button
-                (click)="isRestockModalOpen.set(false)"
-                class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300"
-              >
-                Cancel
-              </button>
-              <button
-                (click)="executeRestock()"
-                [disabled]="restockUnits <= 0 || isSubmittingRestock()"
-                class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm"
-              >
-                @if (isSubmittingRestock()) {
-                  <span>Restocking...</span>
-                } @else {
-                  <span>Confirm +{{ restockUnits }} Units</span>
-                }
-              </button>
-            </div>
-          </div>
-        }
-      </app-modal>
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
-  private inventoryService = inject(InventoryService);
-  private toastService = inject(ToastService);
 
   dashboardData = signal<DashboardData | null>(null);
   isLoading = signal<boolean>(false);
-
-  // Quick Restock state
-  isRestockModalOpen = signal<boolean>(false);
-  selectedProduct = signal<Product | null>(null);
-  restockUnits: number = 20;
-  restockReason: string = 'Emergency restock via Dashboard';
-  isSubmittingRestock = signal<boolean>(false);
 
   ngOnInit() {
     this.loadDashboard();
@@ -475,38 +275,5 @@ export class DashboardComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
-  }
-
-  openRestockModal(product: Product) {
-    this.selectedProduct.set(product);
-    this.restockUnits = Math.max(10, (product.lowStockThreshold || 10) * 2 - product.quantity);
-    this.restockReason = 'Restock triggered from Dashboard alert';
-    this.isRestockModalOpen.set(true);
-  }
-
-  executeRestock() {
-    const prod = this.selectedProduct();
-    if (!prod) return;
-
-    this.isSubmittingRestock.set(true);
-    this.inventoryService.stockIn(prod._id, this.restockUnits, this.restockReason).subscribe({
-      next: (res) => {
-        this.isSubmittingRestock.set(false);
-        this.isRestockModalOpen.set(false);
-        this.toastService.success(res.message);
-        this.loadDashboard();
-      },
-      error: () => {
-        this.isSubmittingRestock.set(false);
-      }
-    });
-  }
-
-  getProductName(prod: any): string {
-    return prod && prod.name ? prod.name : 'Unknown Product';
-  }
-
-  getUserName(user: any): string {
-    return user && user.name ? user.name : 'System';
   }
 }

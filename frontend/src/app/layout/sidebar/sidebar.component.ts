@@ -90,28 +90,6 @@ import { IconComponent } from '../../shared/components/icons/icon.component';
           </a>
         </nav>
       </div>
-
-      <!-- Bottom Card: API Documentation -->
-      <div class="p-5 border-t border-slate-100 dark:border-slate-800">
-        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-rose-50 dark:from-slate-800 dark:to-slate-800/60 border border-indigo-100 dark:border-slate-700">
-          <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs mb-1">
-            <app-icon name="shield" customClass="w-4 h-4" />
-            <span>OpenAPI 3.0</span>
-          </div>
-          <p class="text-xs text-slate-600 dark:text-slate-400 mb-3">
-            Explore live REST endpoints & schemas via Swagger UI.
-          </p>
-          <a
-            href="http://localhost:5000/api-docs"
-            target="_blank"
-            rel="noopener"
-            class="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition"
-          >
-            <span>Open Swagger UI</span>
-            <app-icon name="external-link" customClass="w-3.5 h-3.5" />
-          </a>
-        </div>
-      </div>
     </aside>
   `
 })

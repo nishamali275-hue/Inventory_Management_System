@@ -129,5 +129,7 @@ describe('Inventory Management System Backend Test Suite', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.kpis.totalProducts).toBeGreaterThanOrEqual(15);
     expect(res.body.data.stockStatusDistribution.length).toBe(3);
+    expect(res.body.data.recentTransactions).toBeUndefined();
+    expect(res.body.data.lowStockAlerts).toBeUndefined();
   });
 });

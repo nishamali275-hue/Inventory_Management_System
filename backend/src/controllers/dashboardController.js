@@ -1,6 +1,5 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
-const InventoryTransaction = require('../models/InventoryTransaction');
 
 /**
  * @desc    Get dashboard statistics and chart data
@@ -13,9 +12,7 @@ exports.getDashboardStats = async (req, res, next) => {
       totalProducts,
       totalCategories,
       productsStats,
-      categoryDistribution,
-      recentTransactions,
-      lowStockAlerts
+      categoryDistribution
     ] = await Promise.all([
       // 1. Total products count
       Product.countDocuments(),
@@ -66,22 +63,7 @@ exports.getDashboardStats = async (req, res, next) => {
           }
         },
         { $sort: { totalStock: -1 } }
-      ]),
-
-      // 5. Recent 6 inventory transactions
-      InventoryTransaction.find()
-        .populate('product', 'name sku imageUrl')
-        .populate('performedBy', 'name')
-        .sort({ createdAt: -1 })
-        .limit(6),
-
-      // 6. Top critical low-stock items
-      Product.find({
-        $or: [{ status: 'Low Stock' }, { status: 'Out of Stock' }]
-      })
-        .populate('category', 'name')
-        .sort({ quantity: 1 })
-        .limit(6)
+      ])
     ]);
 
     const stats = productsStats[0] || {
@@ -109,9 +91,7 @@ exports.getDashboardStats = async (req, res, next) => {
           { status: 'Low Stock', count: stats.lowStockCount, color: '#f59e0b' },
           { status: 'Out of Stock', count: stats.outOfStockCount, color: '#ef4444' }
         ],
-        categoryDistribution,
-        recentTransactions,
-        lowStockAlerts
+        categoryDistribution
       }
     });
   } catch (error) {

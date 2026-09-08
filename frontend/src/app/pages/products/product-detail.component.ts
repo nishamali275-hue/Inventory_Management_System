@@ -10,11 +10,12 @@ import { Product } from '../../core/models/product.model';
 import { InventoryTransaction } from '../../core/models/inventory.model';
 import { IconComponent } from '../../shared/components/icons/icon.component';
 import { QrModalComponent } from '../../shared/components/qr-modal/qr-modal.component';
+import { ProductFormComponent } from './product-form.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, IconComponent, QrModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, IconComponent, QrModalComponent, ProductFormComponent],
   template: `
     <div class="space-y-6 max-w-6xl mx-auto">
       <!-- Breadcrumb & Back -->
@@ -28,13 +29,25 @@ import { QrModalComponent } from '../../shared/components/qr-modal/qr-modal.comp
           <span class="text-slate-900 dark:text-white font-medium">{{ product()?.name || 'Details' }}</span>
         </div>
 
-        <button
-          (click)="openQrModal()"
-          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs"
-        >
-          <app-icon name="qr-code" customClass="w-4 h-4 text-indigo-500" />
-          <span>Generate QR Label</span>
-        </button>
+        <div class="flex items-center gap-2">
+          @if (authService.isAdmin()) {
+            <button
+              (click)="isEditModalOpen.set(true)"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs"
+            >
+              <app-icon name="edit" customClass="w-4 h-4 text-amber-500" />
+              <span>Edit Product</span>
+            </button>
+          }
+
+          <button
+            (click)="openQrModal()"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs"
+          >
+            <app-icon name="qr-code" customClass="w-4 h-4 text-indigo-500" />
+            <span>Generate QR Label</span>
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -267,6 +280,14 @@ import { QrModalComponent } from '../../shared/components/qr-modal/qr-modal.comp
         [qrCode]="qrCodeImage()"
         (close)="isQrModalOpen.set(false)"
       />
+
+      <!-- Edit Product Modal -->
+      <app-product-form
+        [isOpen]="isEditModalOpen()"
+        [product]="product()"
+        (close)="isEditModalOpen.set(false)"
+        (saved)="onProductUpdated($event)"
+      />
     </div>
   `
 })
@@ -282,6 +303,7 @@ export class ProductDetailComponent implements OnInit {
   isLoading = signal<boolean>(false);
   qrCodeImage = signal<string>('');
   isQrModalOpen = signal<boolean>(false);
+  isEditModalOpen = signal<boolean>(false);
 
   quickDelta: number = 5;
 
@@ -366,5 +388,13 @@ export class ProductDetailComponent implements OnInit {
 
   getUserName(user: any): string {
     return user && user.name ? user.name : 'System User';
+  }
+
+  onProductUpdated(updatedProduct: Product) {
+    this.isEditModalOpen.set(false);
+    this.product.set(updatedProduct);
+    const id = updatedProduct._id;
+    this.loadQrCode(id);
+    this.loadTransactions(id);
   }
 }

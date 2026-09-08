@@ -1,6 +1,3 @@
-import { InventoryTransaction } from './inventory.model';
-import { Product } from './product.model';
-
 export interface DashboardKpis {
   totalProducts: number;
   totalCategories: number;
@@ -29,8 +26,6 @@ export interface DashboardData {
   kpis: DashboardKpis;
   stockStatusDistribution: StockStatusDistributionItem[];
   categoryDistribution: CategoryDistributionItem[];
-  recentTransactions: InventoryTransaction[];
-  lowStockAlerts: Product[];
 }
 
 export interface DashboardResponse {

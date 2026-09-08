@@ -349,7 +349,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
       <app-product-form
         [isOpen]="isFormModalOpen()"
         [product]="selectedProductForEdit()"
-        (close)="isFormModalOpen.set(false)"
+        (close)="closeFormModal()"
         (saved)="onProductSaved()"
       />
 
@@ -558,8 +558,13 @@ export class ProductListComponent implements OnInit {
     this.isFormModalOpen.set(true);
   }
 
-  onProductSaved() {
+  closeFormModal() {
     this.isFormModalOpen.set(false);
+    this.selectedProductForEdit.set(null);
+  }
+
+  onProductSaved() {
+    this.closeFormModal();
     this.loadProducts();
   }
 

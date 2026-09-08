@@ -3,8 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./config/swagger');
 const errorHandler = require('./middleware/errorMiddleware');
 
 // Route imports
@@ -38,24 +36,25 @@ if (process.env.NODE_ENV !== 'test') {
 // Serve uploaded static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Swagger API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Inventory API Docs',
-  customCss: '.swagger-ui .topbar { display: none }'
-}));
-
-// Swagger JSON endpoint
-app.get('/api-docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
 
 // Health check route
+const mongoose = require('mongoose');
+const redis = require('./config/redis');
+
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const redisStatus = redis.isRedisAvailable()
+    ? 'connected'
+    : (process.env.REDIS_ENABLED === 'false' ? 'disabled' : 'disconnected');
+
   res.status(200).json({
     status: 'UP',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    services: {
+      database: dbStatus,
+      redis: redisStatus
+    }
   });
 });
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, ElementRef, inject, input, output, signal, effect, untracked, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoryService } from '../../core/services/category.service';
@@ -16,7 +16,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
     <app-modal
       [isOpen]="isOpen()"
       [title]="product() ? 'Edit Product: ' + product()?.name : 'Add New Product'"
-      (close)="close.emit()"
+      (close)="onCancel()"
       customWidth="max-w-2xl"
     >
       <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-4">
@@ -166,6 +166,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
                 class="flex-1 w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
               <input
+                #fileInput
                 type="file"
                 (change)="onFileSelected($event)"
                 accept="image/*"
@@ -179,7 +180,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
-            (click)="close.emit()"
+            (click)="onCancel()"
             class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             Cancel
@@ -212,6 +213,8 @@ export class ProductFormComponent implements OnInit {
   close = output<void>();
   saved = output<Product>();
 
+  fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
   categories = signal<Category[]>([]);
   isSubmitting = signal<boolean>(false);
   selectedFile: File | null = null;
@@ -232,33 +235,95 @@ export class ProductFormComponent implements OnInit {
     return this.productForm.controls;
   }
 
+  constructor() {
+    effect(() => {
+      const open = this.isOpen();
+      const currentProduct = this.product();
+
+      if (open) {
+        if (untracked(() => this.categories().length) === 0) {
+          this.loadCategories();
+        }
+        if (currentProduct) {
+          this.populateForm(currentProduct);
+        } else {
+          this.resetForm();
+        }
+      } else {
+        this.resetForm();
+      }
+    });
+  }
+
   ngOnInit() {
+    this.loadCategories();
+  }
+
+  loadCategories() {
     this.categoryService.getCategories().subscribe({
       next: (res) => {
         if (res.categories) {
           this.categories.set(res.categories);
+          const currentProd = this.product();
+          if (currentProd) {
+            const catId = typeof currentProd.category === 'object' && currentProd.category !== null
+              ? (currentProd.category as any)._id
+              : (currentProd.category || '');
+            if (catId && this.productForm.get('category')?.value !== catId) {
+              this.productForm.patchValue({ category: catId });
+            }
+          }
         }
       }
     });
-
-    if (this.product()) {
-      this.populateForm(this.product()!);
-    }
   }
 
   populateForm(p: Product) {
-    const catId = typeof p.category === 'object' && p.category !== null ? p.category._id : p.category;
+    const catId = typeof p.category === 'object' && p.category !== null ? (p.category as any)._id : (p.category || '');
     this.productForm.patchValue({
-      name: p.name,
-      sku: p.sku,
-      category: catId,
-      quantity: p.quantity,
-      unitPrice: p.unitPrice,
-      supplierName: p.supplierName,
-      lowStockThreshold: p.lowStockThreshold || 10,
+      name: p.name || '',
+      sku: p.sku || '',
+      category: catId || '',
+      quantity: p.quantity ?? 0,
+      unitPrice: p.unitPrice ?? 0,
+      supplierName: p.supplierName || '',
+      lowStockThreshold: p.lowStockThreshold ?? 10,
       description: p.description || '',
       imageUrl: p.imageUrl || ''
     });
+    this.selectedFile = null;
+    const fileEl = this.fileInput()?.nativeElement;
+    if (fileEl) {
+      fileEl.value = '';
+    }
+    this.productForm.markAsPristine();
+    this.productForm.markAsUntouched();
+  }
+
+  resetForm() {
+    this.productForm.reset({
+      name: '',
+      sku: '',
+      category: '',
+      quantity: 0,
+      unitPrice: 0,
+      supplierName: '',
+      lowStockThreshold: 10,
+      description: '',
+      imageUrl: ''
+    });
+    this.selectedFile = null;
+    const fileEl = this.fileInput()?.nativeElement;
+    if (fileEl) {
+      fileEl.value = '';
+    }
+    this.productForm.markAsPristine();
+    this.productForm.markAsUntouched();
+  }
+
+  onCancel() {
+    this.resetForm();
+    this.close.emit();
   }
 
   onFileSelected(event: Event) {
@@ -281,10 +346,10 @@ export class ProductFormComponent implements OnInit {
     formData.append('name', formVal.name!);
     formData.append('sku', formVal.sku!);
     formData.append('category', formVal.category!);
-    formData.append('quantity', formVal.quantity!.toString());
-    formData.append('unitPrice', formVal.unitPrice!.toString());
+    formData.append('quantity', (formVal.quantity ?? 0).toString());
+    formData.append('unitPrice', (formVal.unitPrice ?? 0).toString());
     formData.append('supplierName', formVal.supplierName!);
-    formData.append('lowStockThreshold', (formVal.lowStockThreshold || 10).toString());
+    formData.append('lowStockThreshold', (formVal.lowStockThreshold ?? 10).toString());
     formData.append('description', formVal.description || '');
 
     if (this.selectedFile) {
@@ -299,6 +364,7 @@ export class ProductFormComponent implements OnInit {
         next: (res) => {
           this.isSubmitting.set(false);
           this.toastService.success(res.message || 'Product updated successfully');
+          this.resetForm();
           this.saved.emit(res.product!);
         },
         error: (err) => {
@@ -312,6 +378,7 @@ export class ProductFormComponent implements OnInit {
         next: (res) => {
           this.isSubmitting.set(false);
           this.toastService.success(res.message || 'Product created successfully');
+          this.resetForm();
           this.saved.emit(res.product!);
         },
         error: (err) => {

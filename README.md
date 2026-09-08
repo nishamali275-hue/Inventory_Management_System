@@ -48,14 +48,14 @@ Designed and developed for the **RED Software Full Stack Developer Assignment**.
 - **Transaction Audit Ledger**: Complete chronological audit trail showing timestamp, product, user, delta, previous balance, new balance, and notes.
 
 ### 🎁 6. Bonus Features Implemented
+- ⚡ **Redis In-Memory Caching & Auto-Invalidation**: Caches heavy read routes (Dashboard analytics, paginated product catalog, categories, and inventory audit trail) with non-blocking pattern invalidation on data changes and zero-downtime graceful fallback to MongoDB if Redis is offline.
 - 🏷️ **QR Code Generation**: Automatically generates printable QR code tags with product SKU and specs. Includes direct download and print options.
 - 📥 **Export to CSV**: Download entire catalog to standard CSV format.
 - 📤 **Import from CSV**: Upload batch CSV files with automatic categorization and transaction creation.
 - 🌓 **Dark Mode**: Seamless toggle between clean light and dark theme with persistent storage.
-- 🐳 **Docker & Docker Compose**: Full-stack containerization for MongoDB, Express API, and Angular frontend (via Nginx).
-- 📖 **Swagger / OpenAPI 3.0 Documentation**: Interactive API testing available at `http://localhost:5000/api-docs`.
+- 🐳 **Docker & Docker Compose**: Full-stack containerization for MongoDB, Redis, Express API, and Angular frontend (via Nginx).
 - 📮 **Postman Collection**: Ready-to-import JSON collection in `docs/inventory_management_postman_collection.json`.
-- 🧪 **Automated Backend Test Suite**: 10 integration tests validating auth, CRUD, search, QR codes, and negative inventory prevention.
+- 🧪 **Automated Backend Test Suite**: Automated integration tests validating auth, CRUD, search, QR codes, negative inventory prevention, and caching behavior.
 
 ---
 
@@ -65,10 +65,11 @@ Designed and developed for the **RED Software Full Stack Developer Assignment**.
 | :--- | :--- |
 | **Frontend** | Angular 21 (Standalone Components, Signals, Reactive Forms), Tailwind CSS 4, Lucide SVG Icons |
 | **Backend** | Node.js, Express.js, Mongoose ODM, JWT, BcryptJS, Multer, QRCode, Json2csv |
+| **Cache Layer** | Redis 7+ (`redis` client), Cache Middleware, Pattern Invalidation (`SCAN`) |
 | **Database** | MongoDB 6.0+ |
 | **DevOps** | Docker, Docker Compose, Nginx Alpine |
 | **Testing** | Jest, Supertest |
-| **Documentation**| OpenAPI 3.0 (Swagger UI), Postman Collection, Mermaid ER Diagrams |
+| **Documentation**| Postman Collection, Mermaid ER Diagrams |
 
 ---
 
@@ -78,12 +79,12 @@ Designed and developed for the **RED Software Full Stack Developer Assignment**.
 Inventory_Management_System/
 ├── backend/                       # Node.js + Express REST API
 │   ├── src/
-│   │   ├── config/                # Database (Mongoose) & Swagger configuration
+│   │   ├── config/                # Database (Mongoose) & Redis configuration
 │   │   ├── controllers/           # Auth, Products, Categories, Inventory, Dashboard
-│   │   ├── middleware/            # JWT Auth, RBAC, Error Handler, Upload
+│   │   ├── middleware/            # JWT Auth, RBAC, Cache Middleware, Error Handler, Upload
 │   │   ├── models/                # User, Category, Product, InventoryTransaction
 │   │   ├── routes/                # Express API Route definitions
-│   │   ├── utils/                 # Database Seeder (seedData.js)
+│   │   ├── utils/                 # Database Seeder & Cache Invalidator
 │   │   ├── app.js                 # Express Application bootstrap
 │   │   └── server.js              # Server entry point
 │   ├── tests/                     # Automated API Integration Tests (Jest)
@@ -147,8 +148,7 @@ npm run dev
 # Or production start:
 # npm start
 ```
-> The API will be running at: **http://localhost:5000**  
-> Swagger Documentation: **http://localhost:5000/api-docs**
+> The API will be running at: **http://localhost:5000**
 
 ---
 
@@ -175,6 +175,7 @@ docker-compose up --build
 ```
 This starts:
 - MongoDB at `localhost:27017`
+- Redis Cache at `localhost:6379`
 - Backend API at `localhost:5000`
 - Frontend Web App at `localhost:80`
 

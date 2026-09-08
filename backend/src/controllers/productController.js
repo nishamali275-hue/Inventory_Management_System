@@ -3,6 +3,7 @@ const Category = require('../models/Category');
 const InventoryTransaction = require('../models/InventoryTransaction');
 const QRCode = require('qrcode');
 const { Parser } = require('json2csv');
+const { invalidateProductCache } = require('../utils/cacheInvalidator');
 
 /**
  * @desc    Get all products with filtering, search, sorting, and pagination
@@ -201,6 +202,8 @@ exports.createProduct = async (req, res, next) => {
 
     const populatedProduct = await Product.findById(product._id).populate('category', 'name description');
 
+    await invalidateProductCache();
+
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
@@ -319,6 +322,8 @@ exports.updateProduct = async (req, res, next) => {
 
     const populatedProduct = await Product.findById(product._id).populate('category', 'name description');
 
+    await invalidateProductCache();
+
     res.status(200).json({
       success: true,
       message: 'Product updated successfully',
@@ -348,6 +353,8 @@ exports.deleteProduct = async (req, res, next) => {
     // Remove product and clean up transaction records
     await InventoryTransaction.deleteMany({ product: product._id });
     await product.deleteOne();
+
+    await invalidateProductCache();
 
     res.status(200).json({
       success: true,
@@ -543,6 +550,10 @@ exports.importProductsCsv = async (req, res, next) => {
       } catch (err) {
         errors.push(`Row ${i} (${sku}): ${err.message}`);
       }
+    }
+
+    if (importedCount > 0) {
+      await invalidateProductCache();
     }
 
     res.status(200).json({

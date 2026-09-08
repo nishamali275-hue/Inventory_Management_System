@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+const { invalidateCategoryCache } = require('../utils/cacheInvalidator');
 
 /**
  * @desc    Get all categories with product counts
@@ -102,6 +103,8 @@ exports.createCategory = async (req, res, next) => {
       description: description ? description.trim() : ''
     });
 
+    await invalidateCategoryCache();
+
     res.status(201).json({
       success: true,
       message: 'Category created successfully',
@@ -152,6 +155,8 @@ exports.updateCategory = async (req, res, next) => {
 
     const productsCount = await Product.countDocuments({ category: category._id });
 
+    await invalidateCategoryCache();
+
     res.status(200).json({
       success: true,
       message: 'Category updated successfully',
@@ -191,6 +196,8 @@ exports.deleteCategory = async (req, res, next) => {
     }
 
     await category.deleteOne();
+
+    await invalidateCategoryCache();
 
     res.status(200).json({
       success: true,

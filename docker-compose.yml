@@ -14,6 +14,23 @@ services:
     networks:
       - inventory_network
 
+  redis:
+    image: redis:7-alpine
+    container_name: inventory_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inventory_network
+
   backend:
     build:
       context: ./backend
@@ -26,11 +43,15 @@ services:
       - PORT=5000
       - NODE_ENV=production
       - MONGO_URI=mongodb://mongodb:27017/inventory_db
+      - REDIS_ENABLED=true
+      - REDIS_URL=redis://redis:6379
+      - REDIS_DEFAULT_TTL=300
       - JWT_SECRET=supersecretjwtkey_inventory_mgmt_2026!
       - JWT_EXPIRES_IN=7d
       - CORS_ORIGIN=*
     depends_on:
       - mongodb
+      - redis
     volumes:
       - backend_uploads:/usr/src/app/uploads
     networks:
@@ -51,6 +72,7 @@ services:
 
 volumes:
   mongo_data:
+  redis_data:
   backend_uploads:
 
 networks:

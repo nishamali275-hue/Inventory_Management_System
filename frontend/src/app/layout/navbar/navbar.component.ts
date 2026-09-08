@@ -34,17 +34,6 @@ import { IconComponent } from '../../shared/components/icons/icon.component';
 
       <!-- Right: Actions & User Menu -->
       <div class="flex items-center gap-2 sm:gap-3">
-        <!-- API Docs link -->
-        <a
-          href="http://localhost:5000/api-docs"
-          target="_blank"
-          rel="noopener"
-          class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-        >
-          <app-icon name="external-link" customClass="w-3.5 h-3.5 text-indigo-500" />
-          <span>Swagger Docs</span>
-        </a>
-
         <!-- Dark mode toggle -->
         <button
           (click)="themeService.toggleTheme()"
